@@ -1,0 +1,7 @@
+# PostgreSQL
+# ------------------------------------------------------------------------------
+POSTGRES_HOST=postgres
+POSTGRES_PORT=5432
+POSTGRES_DB=rpa_project
+POSTGRES_USER=HLHpHQAaVtbLynXVHmqLadleXvVZQHvc
+POSTGRES_PASSWORD=s19JadBjGOqmksVc9GMyKbTFtN6J5QEMxdDzgo8yjRr8k755OuZBp7C9GligTMRH

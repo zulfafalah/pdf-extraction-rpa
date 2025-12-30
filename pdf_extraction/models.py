@@ -30,6 +30,7 @@ class PDFExtractionItem(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     created_by = models.CharField(max_length=150)
     updated_by = models.CharField(max_length=150)
+    result_data = models.JSONField(blank=True, null=True)
 
     class Meta:
         verbose_name = 'PDF Extraction Item'

@@ -31,5 +31,9 @@ class PDFExtractionItem(models.Model):
     created_by = models.CharField(max_length=150)
     updated_by = models.CharField(max_length=150)
 
+    class Meta:
+        verbose_name = 'PDF Extraction Item'
+        verbose_name_plural = 'PDF Extraction Items'
+
     def __str__(self):
         return self.pdf_file.name

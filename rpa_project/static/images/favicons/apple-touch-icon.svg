@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" width="180" height="180">
+  <!-- Rounded background -->
+  <rect width="180" height="180" rx="40" fill="#4F46E5"/>
+
+  <!-- PDF Document Icon (centered and larger) -->
+  <g transform="translate(45, 30)">
+    <!-- Document background -->
+    <path d="M5 0 h50 l20 20 v90 a5 5 0 0 1 -5 5 h-60 a5 5 0 0 1 -5 -5 v-105 a5 5 0 0 1 5 -5 z"
+          fill="white" opacity="0.95"/>
+
+    <!-- Folded corner -->
+    <path d="M55 0 v15 a5 5 0 0 0 5 5 h15 z" fill="#E0E7FF"/>
+
+    <!-- PDF text -->
+    <text x="40" y="60" font-family="Arial, sans-serif" font-size="28" font-weight="bold"
+          fill="#4F46E5" text-anchor="middle">PDF</text>
+
+    <!-- Lines representing text content -->
+    <line x1="15" y1="75" x2="65" y2="75" stroke="#6366F1" stroke-width="3" opacity="0.6" stroke-linecap="round"/>
+    <line x1="15" y1="85" x2="65" y2="85" stroke="#6366F1" stroke-width="3" opacity="0.6" stroke-linecap="round"/>
+    <line x1="15" y1="95" x2="50" y2="95" stroke="#6366F1" stroke-width="3" opacity="0.6" stroke-linecap="round"/>
+  </g>
+</svg>

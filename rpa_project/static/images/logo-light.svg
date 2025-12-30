@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 50" width="200" height="50">
+  <!-- PDF Icon -->
+  <g transform="translate(5, 8)">
+    <!-- Document -->
+    <path d="M2 0 h20 l8 8 v26 a2 2 0 0 1 -2 2 h-24 a2 2 0 0 1 -2 -2 v-32 a2 2 0 0 1 2 -2 z"
+          fill="#4F46E5"/>
+    <!-- Folded corner -->
+    <path d="M22 0 v6 a2 2 0 0 0 2 2 h6 z" fill="#6366F1"/>
+    <!-- PDF text inside -->
+    <text x="14" y="22" font-family="Arial, sans-serif" font-size="9" font-weight="bold"
+          fill="white" text-anchor="middle">PDF</text>
+  </g>
+
+  <!-- Text -->
+  <text x="50" y="30" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#1F2937">
+    PDF Extraction
+  </text>
+</svg>

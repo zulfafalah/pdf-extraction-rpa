@@ -5,6 +5,9 @@ import ssl
 from pathlib import Path
 
 import environ
+from django.templatetags.static import static
+from django.urls import reverse_lazy
+from django.utils.translation import gettext_lazy as _
 
 BASE_DIR = Path(__file__).resolve(strict=True).parent.parent.parent
 # rpa_project/
@@ -61,6 +64,7 @@ WSGI_APPLICATION = "config.wsgi.application"
 # APPS
 # ------------------------------------------------------------------------------
 DJANGO_APPS = [
+    "unfold",  # django-unfold admin theme - must be before django.contrib.admin
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
@@ -353,3 +357,168 @@ SPECTACULAR_SETTINGS = {
 }
 # Your stuff...
 # ------------------------------------------------------------------------------
+
+# UNFOLD DJANGO ADMIN CONFIGURATION
+# ------------------------------------------------------------------------------
+UNFOLD = {
+    # Site Customization
+    "SITE_TITLE": "PDF Extraction | RPA Project",
+    "SITE_HEADER": "PDF Extraction Dashboard",
+    "SITE_SUBHEADER": "Automated Document Processing & Data Extraction",
+
+    # Environment Badge
+    "ENVIRONMENT": "rpa_project.unfold_utils.environment_callback",
+
+    "SITE_ICON": {
+        "light": lambda request: static("images/favicons/favicon.svg"),
+        "dark": lambda request: static("images/favicons/favicon.svg"),
+    },
+    # "SITE_LOGO": {
+    #     "light": lambda request: static("images/logo-light.svg"),
+    #     "dark": lambda request: static("images/logo-dark.svg"),
+    # },
+    "SITE_SYMBOL": "description",  # Material Design Icons for document/PDF
+    "SITE_URL": "/admin/",
+
+    # Title Prefix based on Environment
+    "ENVIRONMENT_PREFIX": "rpa_project.unfold_utils.environment_title_prefix_callback",
+    "SITE_FAVICONS": [
+        {
+            "rel": "icon",
+            "sizes": "32x32",
+            "type": "image/svg+xml",
+            "href": lambda request: static("images/favicons/favicon.svg"),
+        },
+        {
+            "rel": "apple-touch-icon",
+            "sizes": "180x180",
+            "type": "image/svg+xml",
+            "href": lambda request: static("images/favicons/apple-touch-icon.svg"),
+        },
+    ],
+
+    # UI Settings
+    "SHOW_HISTORY": True,
+    "SHOW_VIEW_ON_SITE": False,
+    "SHOW_BACK_BUTTON": True,
+    "THEME": None,  # None = auto, "dark" or "light"
+    "BORDER_RADIUS": "8px",
+    "COLORS": {
+        "base": {
+            "50": "oklch(98.5% .002 247.839)",
+            "100": "oklch(96.7% .003 264.542)",
+            "200": "oklch(92.8% .006 264.531)",
+            "300": "oklch(87.2% .01 258.338)",
+            "400": "oklch(70.7% .022 261.325)",
+            "500": "oklch(55.1% .027 264.364)",
+            "600": "oklch(44.6% .03 256.802)",
+            "700": "oklch(37.3% .034 259.733)",
+            "800": "oklch(27.8% .033 256.848)",
+            "900": "oklch(21% .034 264.665)",
+            "950": "oklch(13% .028 261.692)",
+        },
+        "primary": {
+            "50": "oklch(97.8% .016 275.233)",
+            "100": "oklch(95.1% .038 275.797)",
+            "200": "oklch(90.5% .074 276.037)",
+            "300": "oklch(83.5% .128 275.522)",
+            "400": "oklch(71.8% .213 274.666)",
+            "500": "oklch(63.1% .285 272.791)",
+            "600": "oklch(55.9% .305 270.698)",
+            "700": "oklch(49.8% .283 270.298)",
+            "800": "oklch(44.3% .235 272.141)",
+            "900": "oklch(38.8% .191 273.452)",
+            "950": "oklch(29.5% .161 271.297)",
+        },
+        "font": {
+            "subtle-light": "var(--color-base-500)",
+            "subtle-dark": "var(--color-base-400)",
+            "default-light": "var(--color-base-700)",
+            "default-dark": "var(--color-base-200)",
+            "important-light": "var(--color-base-900)",
+            "important-dark": "var(--color-base-50)",
+        },
+    },
+
+    # Extensions Configuration
+    "EXTENSIONS": {
+        "modeltranslation": {
+            "flags": {
+                "en": "🇬🇧",
+                "fr": "🇫🇷",
+                "pt": "🇧🇷",
+            },
+        },
+    },
+
+    # Sidebar Navigation
+    "SIDEBAR": {
+        "show_search": True,
+        "show_all_applications": False,
+        "navigation": [
+            {
+                "title": _("Dashboard"),
+                "separator": False,
+                "collapsible": False,
+                "items": [
+                    {
+                        "title": _("Home"),
+                        "icon": "dashboard",
+                        "link": reverse_lazy("admin:index"),
+                    },
+                ],
+            },
+            {
+                "title": _("PDF Extraction"),
+                "separator": True,
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": _("Extractions"),
+                        "icon": "folder_open",
+                        "link": reverse_lazy("admin:pdf_extraction_pdfextraction_changelist"),
+                        "badge": "rpa_project.unfold_utils.extraction_count_badge",
+                    },
+                ],
+            },
+            {
+                "title": _("Regex Engine"),
+                "separator": True,
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": _("Customer Regex Rules"),
+                        "icon": "code",
+                        "link": reverse_lazy("admin:regex_engine_customerregexrule_changelist"),
+                    },
+                ],
+            },
+            {
+                "title": _("User Management"),
+                "separator": True,
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": _("Users"),
+                        "icon": "group",
+                        "link": reverse_lazy("admin:users_user_changelist"),
+                        "badge": "rpa_project.unfold_utils.user_count_badge",
+                    },
+                ],
+            },
+            {
+                "title": _("Administration"),
+                "separator": True,
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": _("Groups"),
+                        "icon": "security",
+                        "link": reverse_lazy("admin:auth_group_changelist"),
+                        "permission": "rpa_project.unfold_utils.is_superuser",
+                    },
+                ],
+            },
+        ],
+    },
+}

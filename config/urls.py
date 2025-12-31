@@ -23,6 +23,8 @@ urlpatterns = [
     path("users/", include("rpa_project.users.urls", namespace="users")),
     path("accounts/", include("allauth.urls")),
     # Your stuff: custom urls includes go here
+    # PDF Extraction
+    path("api/pdf/", include("pdf_extraction.urls", namespace="pdf_extraction")),
     # ...
     # Media files
     *static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT),

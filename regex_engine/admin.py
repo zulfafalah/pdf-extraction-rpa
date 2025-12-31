@@ -12,6 +12,7 @@ class CustomerRegexRuleAdmin(ModelAdmin):
     list_filter = ('customer_name', 'field_name')
     search_fields = ('customer_name', 'customer_id', 'field_name')
     actions = ['duplicate_rows']
+    warn_unsaved_form = True
 
     fieldsets = (
         ('Customer Information', {

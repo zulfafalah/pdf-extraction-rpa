@@ -157,37 +157,69 @@ class PDFExtractionService:
 
         for rule in item_rules:
             field_name = rule.field_name
-            pattern = rule.regex_pattern
             group_num = rule.regex_group
 
-            try:
-                # Use finditer to get all matches for items
-                matches = re.finditer(pattern, text, re.MULTILINE | re.DOTALL)
+            # Collect all available patterns in order
+            patterns_to_try = []
+            if rule.regex_pattern:
+                patterns_to_try.append(('regex_pattern', rule.regex_pattern))
+            if rule.regex_pattern_v2:
+                patterns_to_try.append(('regex_pattern_v2', rule.regex_pattern_v2))
+            if rule.regex_pattern_v3:
+                patterns_to_try.append(('regex_pattern_v3', rule.regex_pattern_v3))
 
-                for match_index, match in enumerate(matches):
-                    # Extract all groups from the match
-                    groups = match.groups()
+            if not patterns_to_try:
+                logger.warning(f"No patterns available for field '{field_name}'")
+                continue
 
-                    # Ensure we have enough items in the list
-                    while len(items) <= match_index:
-                        items.append({})
+            matched = False
+            matches_found = []
 
-                    # Extract the value using the specified group number
-                    if len(groups) >= group_num:
-                        extracted_value = groups[group_num - 1]
-                        items[match_index][field_name] = extracted_value.strip() if extracted_value else None
-                        logger.info(f"Extracted item {match_index + 1} - '{field_name}': {extracted_value.strip() if extracted_value else None}")
+            # Try each pattern in order until we get matches
+            for pattern_name, pattern in patterns_to_try:
+                try:
+                    # Use finditer to get all matches for items
+                    matches = list(re.finditer(pattern, text, re.MULTILINE | re.DOTALL))
+
+                    if matches:
+                        matches_found = matches
+                        logger.info(f"Field '{field_name}' matched using {pattern_name} with {len(matches)} items")
+                        matched = True
+                        break  # Stop trying other patterns once we get a match
                     else:
-                        items[match_index][field_name] = None
-                        logger.warning(f"Group {group_num} not found for item {match_index + 1} - '{field_name}'")
+                        logger.debug(f"No matches found for field '{field_name}' using {pattern_name}, trying next pattern...")
 
-                if not list(re.finditer(pattern, text, re.MULTILINE | re.DOTALL)):
-                    logger.warning(f"No items found for field '{field_name}' with pattern: {pattern}")
+                except re.error as e:
+                    logger.error(f"Invalid regex pattern ({pattern_name}) for field '{field_name}': {pattern}. Error: {str(e)}")
+                    continue  # Try next pattern
+                except Exception as e:
+                    logger.error(f"Unexpected error with pattern ({pattern_name}) for field '{field_name}': {str(e)}")
+                    continue  # Try next pattern
 
-            except re.error as e:
-                logger.error(f"Invalid regex pattern for item field '{field_name}': {pattern}. Error: {str(e)}")
-            except Exception as e:
-                logger.error(f"Unexpected error extracting item field '{field_name}': {str(e)}")
+            # Process the matches if found
+            if matched and matches_found:
+                try:
+                    for match_index, match in enumerate(matches_found):
+                        # Extract all groups from the match
+                        groups = match.groups()
+
+                        # Ensure we have enough items in the list
+                        while len(items) <= match_index:
+                            items.append({})
+
+                        # Extract the value using the specified group number
+                        if len(groups) >= group_num:
+                            extracted_value = groups[group_num - 1]
+                            items[match_index][field_name] = extracted_value.strip() if extracted_value else None
+                            logger.info(f"Extracted item {match_index + 1} - '{field_name}': {extracted_value.strip() if extracted_value else None}")
+                        else:
+                            items[match_index][field_name] = None
+                            logger.warning(f"Group {group_num} not found for item {match_index + 1} - '{field_name}'")
+
+                except Exception as e:
+                    logger.error(f"Error processing matches for field '{field_name}': {str(e)}")
+            else:
+                logger.warning(f"No items found for field '{field_name}' after trying all available patterns")
 
         logger.info(f"Total items extracted: {len(items)}")
         return items

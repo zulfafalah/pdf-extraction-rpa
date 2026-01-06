@@ -13,7 +13,10 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
   # dependencies for building Python packages
   build-essential \
   # psycopg dependencies
-  libpq-dev
+  libpq-dev \
+  # mysqlclient dependencies
+  pkg-config \
+  default-libmysqlclient-dev
 
 
 # Requirements are installed here to ensure they will be cached.
@@ -43,6 +46,8 @@ RUN addgroup --system django \
 RUN apt-get update && apt-get install --no-install-recommends -y \
   # psycopg dependencies
   libpq-dev \
+  # mysqlclient runtime dependencies
+  default-libmysqlclient-dev \
   # Translations dependencies
   gettext \
   # entrypoint

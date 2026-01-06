@@ -17,6 +17,9 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
   build-essential \
   # psycopg dependencies
   libpq-dev \
+  # mysqlclient dependencies
+  pkg-config \
+  default-libmysqlclient-dev \
   gettext \
   wait-for-it
 

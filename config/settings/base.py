@@ -51,6 +51,24 @@ LOCALE_PATHS = [str(BASE_DIR / "locale")]
 # https://docs.djangoproject.com/en/dev/ref/settings/#databases
 DATABASES = {"default": env.db("DATABASE_URL")}
 DATABASES["default"]["ATOMIC_REQUESTS"] = True
+
+# External MySQL Database (providers) - Read Only, No Migrations
+# Using custom backend to skip version check (MariaDB 10.3.29 < required 10.5)
+DATABASES["providers"] = {
+    "ENGINE": "config.db_backends.mysql_legacy",
+    "NAME": env("PROVIDERS_DB_NAME"),
+    "USER": env("PROVIDERS_DB_USER"),
+    "PASSWORD": env("PROVIDERS_DB_PASSWORD"),
+    "HOST": env("PROVIDERS_DB_HOST"),
+    "PORT": env("PROVIDERS_DB_PORT"),
+    "OPTIONS": {
+        "charset": "utf8mb4",
+    },
+}
+
+# Database Routers - Prevent migrations on external databases
+DATABASE_ROUTERS = ["config.db_routers.ProvidersRouter"]
+
 # https://docs.djangoproject.com/en/stable/ref/settings/#std:setting-DEFAULT_AUTO_FIELD
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -93,6 +111,7 @@ LOCAL_APPS = [
     "rpa_project.users",
     "regex_engine",
     "pdf_extraction",
+    "providers",  # External MySQL database models (managed=False)
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS

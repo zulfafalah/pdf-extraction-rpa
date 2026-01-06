@@ -12,3 +12,11 @@ REDIS_URL=redis://redis:6379/0
 # Flower
 CELERY_FLOWER_USER=VRAFTXBwhOpLicpLetZDBCjFpOTASvAs
 CELERY_FLOWER_PASSWORD=7Faut9NLVABFfSv3BVM1UHoeL2lx9fGn6g10r9HjWhaZ1AXB7scFMyEnVnvve2HE
+
+# External Providers MySQL Database
+# ------------------------------------------------------------------------------
+PROVIDERS_DB_HOST=192.168.100.108
+PROVIDERS_DB_PORT=3306
+PROVIDERS_DB_USER=rpa
+PROVIDERS_DB_PASSWORD=Cx8Ik922DECMdCOs
+PROVIDERS_DB_NAME=providers

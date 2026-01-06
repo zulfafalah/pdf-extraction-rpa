@@ -191,4 +191,5 @@ dependencies = [
     "uvicorn[standard]==0.40.0",
     "whitenoise==6.11.0",
     "pdfplumber==0.11.8",
+    "mysqlclient>=2.2.0",
 ]

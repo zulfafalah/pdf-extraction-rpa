@@ -12,3 +12,7 @@ def handle_pdf_extraction_item_save(sender, instance: PDFExtractionItem, created
         pdf_service = PDFExtractionService()
         pdf_service.prosess_extraction(instance.pdf_extraction.id)
 
+        # After extraction is complete, queue Celery task to save data to provider tables
+        from .tasks import save_extraction_to_provider
+        save_extraction_to_provider.delay(instance.id)
+

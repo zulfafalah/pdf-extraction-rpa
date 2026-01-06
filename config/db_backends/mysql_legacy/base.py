@@ -9,12 +9,28 @@ with older database versions.
 """
 
 from django.db.backends.mysql.base import DatabaseWrapper as MySQLDatabaseWrapper
+from django.db.backends.mysql.features import DatabaseFeatures as MySQLDatabaseFeatures
+
+
+class DatabaseFeatures(MySQLDatabaseFeatures):
+    """
+    Custom database features for legacy MariaDB.
+
+    Disables features not supported by MariaDB 10.3.x
+    """
+
+    # MariaDB 10.3 doesn't support RETURNING clause
+    can_return_columns_from_insert = False
+    can_return_rows_from_bulk_insert = False
 
 
 class DatabaseWrapper(MySQLDatabaseWrapper):
     """
     Custom MySQL database wrapper that skips version validation.
     """
+
+    # Use custom features class
+    features_class = DatabaseFeatures
 
     def check_database_version_supported(self):
         """

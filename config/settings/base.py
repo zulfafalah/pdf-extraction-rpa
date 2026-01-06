@@ -112,6 +112,7 @@ LOCAL_APPS = [
     "regex_engine",
     "pdf_extraction",
     "providers",  # External MySQL database models (managed=False)
+    "data_mapping",
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -509,6 +510,18 @@ UNFOLD = {
                         "title": _("Customer Regex Rules"),
                         "icon": "code",
                         "link": reverse_lazy("admin:regex_engine_customerregexrule_changelist"),
+                    },
+                ],
+            },
+            {
+                "title": _("Data Mapping"),
+                "separator": True,
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": _("Customer Field Mappings"),
+                        "icon": "swap_horiz",
+                        "link": reverse_lazy("admin:data_mapping_customerfieldmapping_changelist"),
                     },
                 ],
             },

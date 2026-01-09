@@ -20,7 +20,7 @@ class CustomerRegexRuleAdmin(ModelAdmin):
             'classes': ('tab',)
         }),
         ('Regex Configuration', {
-            'fields': ('field_name', 'is_item_field', 'regex_pattern', 'regex_group'),
+            'fields': ('field_name', 'is_item_field', 'regex_pattern', 'data_type', 'regex_group'),
             'classes': ('tab',)
         }),
         ('Regex Additional Patterns', {

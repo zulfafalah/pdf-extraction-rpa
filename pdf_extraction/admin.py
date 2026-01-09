@@ -6,8 +6,8 @@ from .models import PDFExtraction, PDFExtractionItem
 class PDFExtractionItemInline(TabularInline):
     model = PDFExtractionItem
     extra = 1
-    fields = ('pdf_file', 'pdf_file_name', 'result_data')
-    readonly_fields = ('created_at', 'updated_at', 'pdf_file_name', 'result_data')
+    fields = ('pdf_file', 'pdf_file_name', 'result_data', 'final_data')
+    readonly_fields = ('created_at', 'updated_at', 'pdf_file_name', 'result_data', 'final_data')
     exclude = ('created_by', 'updated_by')
 
 

@@ -10,6 +10,12 @@ class CustomerRegexRule(models.Model):
     regex_pattern_v3 = models.TextField(null=True, blank=True)
     regex_group = models.IntegerField(null=True, blank=True, default=1)
     is_item_field = models.BooleanField(default=False)
+    data_type = models.CharField(max_length=50, choices=(
+        ('string', 'String'),
+        ('integer', 'Integer'),
+        ('float', 'Float'),
+        ('date', 'Date'),
+    ), default='string')
 
     def __str__(self):
         return f"{self.customer_name} - {self.field_name}"

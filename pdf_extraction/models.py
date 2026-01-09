@@ -33,6 +33,7 @@ class PDFExtractionItem(models.Model):
     created_by = models.CharField(max_length=150, null=True, blank=True)
     updated_by = models.CharField(max_length=150, null=True, blank=True )
     result_data = models.JSONField(blank=True, null=True)
+    final_data = models.JSONField(blank=True, null=True)
 
     class Meta:
         verbose_name = 'PDF Extraction Item'

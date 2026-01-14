@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.shortcuts import redirect
 from django.urls import reverse
 from unfold.admin import ModelAdmin
-from .models import CustomerRegexRule
+from .models import CustomerRegexRule, PPHRegexRule
 
 
 @admin.register(CustomerRegexRule)
@@ -57,6 +57,61 @@ class CustomerRegexRuleAdmin(ModelAdmin):
             return redirect(url)
 
         # If more than 1 row, show a regular success message
+        self.message_user(
+            request,
+            f'{duplicated_count} rows successfully duplicated.',
+            messages.SUCCESS
+        )
+
+    duplicate_rows.short_description = "Duplicate selected rows"
+
+
+@admin.register(PPHRegexRule)
+class PPHRegexRuleAdmin(ModelAdmin):
+    list_display = ['pph_name', 'pph_id', 'field_name', 'regex_pattern', 'created_at']
+    list_filter = ['pph_name', 'pph_id', 'field_name']
+    search_fields = ['pph_name', 'pph_id', 'field_name']
+    actions = ['duplicate_rows']
+    warn_unsaved_form = True
+
+    fieldsets = (
+        ('PPH Information', {
+            'fields': ('pph_id', 'pph_name',),
+            'classes': ('tab',)
+        }),
+        ('Regex Configuration', {
+            'fields': ('field_name', 'is_item_field', 'regex_pattern', 'data_type', 'regex_group'),
+            'classes': ('tab',)
+        }),
+        ('Regex Additional Patterns', {
+            'fields': ('regex_pattern_v2', 'regex_pattern_v3'),
+            'classes': ('tab',)
+        }),
+    )
+
+    def duplicate_rows(self, request, queryset):
+        """
+        Action for duplicating selected rows
+        """
+        duplicated_count = 0
+        last_duplicated_obj = None
+
+        for obj in queryset:
+            obj.pk = None
+            obj.id = None
+            obj.save()
+            duplicated_count += 1
+            last_duplicated_obj = obj
+
+        if duplicated_count == 1 and last_duplicated_obj:
+            self.message_user(
+                request,
+                f'Row successfully duplicated. You are now editing the duplicate.',
+                messages.SUCCESS
+            )
+            url = reverse('admin:regex_engine_pphregexrule_change', args=[last_duplicated_obj.pk])
+            return redirect(url)
+
         self.message_user(
             request,
             f'{duplicated_count} rows successfully duplicated.',

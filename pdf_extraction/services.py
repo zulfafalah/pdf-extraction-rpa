@@ -5,7 +5,7 @@ from django.db import transaction
 
 import regex_engine
 from .models import PDFExtraction, PDFExtractionItem
-from regex_engine.models import CustomerRegexRule
+from regex_engine.models import CustomerRegexRule, PPHRegexRule
 
 logger = logging.getLogger(__name__)
 
@@ -20,13 +20,14 @@ class PDFExtractionService:
             return
 
         pdf_items = extraction.pdf_items.all()
+        extraction_type = getattr(extraction, 'extraction_type', 'customer')
         for item in pdf_items:
-            self._process_pdf_item(item, extraction.extraction_method, customer_name=extraction.customer_name)
+            self._process_pdf_item(item, extraction.extraction_method, customer_name=extraction.customer_name, extraction_type=extraction_type)
 
-    def _process_pdf_item(self, item: PDFExtractionItem, method: str, customer_name: str) -> None:
+    def _process_pdf_item(self, item: PDFExtractionItem, method: str, customer_name: str, extraction_type: str = 'customer') -> None:
         if method == 'regex':
             text = self.extract_text_from_pdf(item.pdf_file.path, method)
-            extracted_data = self.extract_data_using_regex(text, customer_name)
+            extracted_data = self.extract_data_using_regex(text, customer_name, extraction_type)
 
             # Log the extracted data
             logger.info(f"Extracted data for PDF item {item.id}: {extracted_data}")
@@ -77,11 +78,15 @@ class PDFExtractionService:
             logger.error(f"Error extracting text from PDF {file_path}: {str(e)}")
             raise
 
-    def extract_data_using_regex(self, text, customer_name):
+    def extract_data_using_regex(self, text, customer_name, extraction_type='customer'):
         """Extract data from text using provided regex rules"""
-        # Extract header and item data separately
-        header_data = self.extract_header_data(text, customer_name)
-        item_data = self.extract_item_data(text, customer_name)
+        # Extract header and item data separately based on extraction_type
+        if extraction_type in ['pph_masukan', 'pph_keluaran']:
+            header_data = self.extract_header_data_pph(text, extraction_type)
+            item_data = self.extract_item_data_pph(text, extraction_type)
+        else:
+            header_data = self.extract_header_data(text, customer_name)
+            item_data = self.extract_item_data(text, customer_name)
 
         # Combine both data
         extracted_data = {
@@ -90,6 +95,131 @@ class PDFExtractionService:
         }
 
         return extracted_data
+
+    def extract_header_data_pph(self, text: str, pph_type: str) -> Dict[str, Any]:
+        """Extract header data from text using PPHRegexRule"""
+        import re
+
+        # Get PPH rules based on type (is_item_field=False)
+        pph_rules = PPHRegexRule.objects.filter(
+            pph_name=pph_type,
+            is_item_field=False
+        )
+
+        if not pph_rules.exists():
+            logger.warning(f"No PPH rules found for type: {pph_type}")
+            return {}
+
+        extracted_data = {}
+
+        for rule in pph_rules:
+            field_name = rule.field_name
+            pattern = rule.regex_pattern
+            group_num = rule.regex_group
+
+            try:
+                match = re.search(pattern, text, re.MULTILINE | re.DOTALL)
+
+                if match:
+                    extracted_value = match.group(group_num)
+                    extracted_data[field_name] = extracted_value.strip()
+                    logger.info(f"PPH {pph_type} - header '{field_name}': {extracted_value.strip()}")
+                else:
+                    logger.warning(f"No match for PPH header field '{field_name}'")
+                    extracted_data[field_name] = None
+
+            except re.error as e:
+                logger.error(f"Invalid regex pattern for PPH header '{field_name}': {pattern}. Error: {str(e)}")
+                extracted_data[field_name] = None
+            except IndexError:
+                logger.error(f"Group {group_num} not found in PPH regex match for '{field_name}'")
+                extracted_data[field_name] = None
+            except Exception as e:
+                logger.error(f"Unexpected error extracting PPH header '{field_name}': {str(e)}")
+                extracted_data[field_name] = None
+
+        return extracted_data
+
+    def extract_item_data_pph(self, text: str, pph_type: str) -> List[Dict[str, Any]]:
+        """Extract item data from text using PPHRegexRule where is_item_field=True"""
+        import re
+
+        # Get item PPH rules only (is_item_field=True)
+        item_rules = PPHRegexRule.objects.filter(
+            pph_name=pph_type,
+            is_item_field=True
+        ).order_by('id')
+
+        if not item_rules.exists():
+            logger.warning(f"No PPH item rules found for type: {pph_type}")
+            return []
+
+        items = []
+
+        for rule in item_rules:
+            field_name = rule.field_name
+            group_num = rule.regex_group
+
+            # Collect all available patterns in order
+            patterns_to_try = []
+            if rule.regex_pattern:
+                patterns_to_try.append(('regex_pattern', rule.regex_pattern))
+            if rule.regex_pattern_v2:
+                patterns_to_try.append(('regex_pattern_v2', rule.regex_pattern_v2))
+            if rule.regex_pattern_v3:
+                patterns_to_try.append(('regex_pattern_v3', rule.regex_pattern_v3))
+
+            if not patterns_to_try:
+                logger.warning(f"No patterns available for PPH field '{field_name}'")
+                continue
+
+            matched = False
+            matches_found = []
+
+            # Try each pattern in order until we get matches
+            for pattern_name, pattern in patterns_to_try:
+                try:
+                    matches = list(re.finditer(pattern, text, re.MULTILINE | re.DOTALL))
+
+                    if matches:
+                        matches_found = matches
+                        logger.info(f"PPH {pph_type} - field '{field_name}' matched using {pattern_name} with {len(matches)} items")
+                        matched = True
+                        break
+                    else:
+                        logger.debug(f"No matches found for PPH field '{field_name}' using {pattern_name}, trying next...")
+
+                except re.error as e:
+                    logger.error(f"Invalid PPH regex pattern ({pattern_name}) for '{field_name}': {pattern}. Error: {str(e)}")
+                    continue
+                except Exception as e:
+                    logger.error(f"Unexpected error with PPH pattern ({pattern_name}) for '{field_name}': {str(e)}")
+                    continue
+
+            # Process the matches if found
+            if matched and matches_found:
+                try:
+                    for match_index, match in enumerate(matches_found):
+                        groups = match.groups()
+
+                        while len(items) <= match_index:
+                            items.append({})
+
+                        if len(groups) >= group_num:
+                            extracted_value = groups[group_num - 1]
+                            items[match_index][field_name] = extracted_value.strip() if extracted_value else None
+                            logger.info(f"PPH {pph_type} - item {match_index + 1} '{field_name}': {extracted_value.strip() if extracted_value else None}")
+                        else:
+                            items[match_index][field_name] = None
+                            logger.warning(f"Group {group_num} not found for PPH item {match_index + 1} '{field_name}'")
+
+                except Exception as e:
+                    logger.error(f"Error processing PPH matches for '{field_name}': {str(e)}")
+            else:
+                logger.warning(f"No items found for PPH field '{field_name}' after trying all patterns")
+
+        logger.info(f"PPH {pph_type} - Total items extracted: {len(items)}")
+        return items
 
     def extract_header_data(self, text: str, customer_name: str) -> Dict[str, Any]:
         """Extract header data from text using regex rules where is_item_field=False"""

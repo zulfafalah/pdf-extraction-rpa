@@ -511,6 +511,11 @@ UNFOLD = {
                         "icon": "code",
                         "link": reverse_lazy("admin:regex_engine_customerregexrule_changelist"),
                     },
+                    {
+                        "title": _("PPH Regex Rules"),
+                        "icon": "account_balance",
+                        "link": reverse_lazy("admin:regex_engine_pphregexrule_changelist"),
+                    },
                 ],
             },
             {

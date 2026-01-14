@@ -1,0 +1,313 @@
+{% extends "base.html" %}
+{% load static i18n %}
+
+{% block title %}
+Upload PDF & Export Excel
+{% endblock title %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-file-pdf me-2"></i>
+                        Upload PDF untuk Ekstraksi Data
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <!-- Form Upload -->
+                    <form id="pdfUploadForm" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <!-- Extraction Type Dropdown -->
+                        <div class="mb-3">
+                            <label for="extraction_type" class="form-label">
+                                <strong>Tipe Ekstraksi:</strong>
+                            </label>
+                            <select class="form-select" id="extraction_type" name="extraction_type">
+                                <option value="customer">Customer Extraction</option>
+                                <option value="pph_masukan">PPH Extraction</option>
+                            </select>
+                        </div>
+
+                        <!-- Customer Name Dropdown -->
+                        <div class="mb-3">
+                            <label for="customer_name" class="form-label">
+                                <strong>Pilih Customer/PPH:</strong>
+                            </label>
+                            <select class="form-select" id="customer_name" name="customer_name" required>
+                                <!-- Options akan di-load via JavaScript -->
+                            </select>
+                        </div>
+                        
+                        <!-- File Upload -->
+                        <div class="mb-3">
+                            <label for="pdf_files" class="form-label">
+                                <strong>Pilih File PDF:</strong>
+                            </label>
+                            <input type="file" class="form-control" 
+                                   id="pdf_files" name="pdf_files" multiple
+                                   accept=".pdf" required>
+                            <div class="form-text">Hanya file PDF yang diterima</div>
+                        </div>
+                        
+                        <!-- Preview -->
+                        <div id="filePreview" class="mb-3" style="display: none;">
+                            <div class="alert alert-info">
+                                <strong>File dipilih:</strong> <span id="fileName"></span>
+                            </div>
+                        </div>
+                        
+                        <!-- Submit Button -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                                <i class="fas fa-upload me-2"></i>
+                                Upload & Proses
+                            </button>
+                            <button type="button" class="btn btn-success btn-lg" id="exportBtn" style="display: none;">
+                                <i class="fas fa-file-excel me-2"></i>
+                                Download Excel
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <!-- Loading Spinner -->
+                    <div id="loading" class="text-center mt-4" style="display: none;">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Sedang memproses PDF...</p>
+                    </div>
+                    
+                    <!-- Error Message -->
+                    <div id="errorMessage" class="alert alert-danger mt-4" style="display: none;">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Results Section -->
+    <div class="row mt-5" id="resultsSection" style="display: none;">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">Hasil Ekstraksi</h4>
+                    <button class="btn btn-light" onclick="toggleResults()">
+                        <i class="fas fa-eye-slash me-1"></i> Sembunyikan
+                    </button>
+                </div>
+                <div class="card-body">
+                    <pre id="jsonResult" class="bg-light p-3 rounded" style="max-height: 400px; overflow: auto;"></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block javascript %}
+{{ block.super }}
+
+<!-- Font Awesome untuk icon -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('pdfUploadForm');
+    const fileInput = document.getElementById('pdf_files');
+    const filePreview = document.getElementById('filePreview');
+    const fileName = document.getElementById('fileName');
+    const loading = document.getElementById('loading');
+    const errorMessage = document.getElementById('errorMessage');
+    const resultsSection = document.getElementById('resultsSection');
+    const jsonResult = document.getElementById('jsonResult');
+    const exportBtn = document.getElementById('exportBtn');
+    const submitBtn = document.getElementById('submitBtn');
+    const extractionTypeSelect = document.getElementById('extraction_type');
+    const customerSelect = document.getElementById('customer_name');
+    
+    let extractedData = null;
+    
+    // Function untuk load customers berdasarkan extraction_type
+    async function loadCustomers(extractionType) {
+        try {
+            const response = await fetch(`/api/pdf/customers/?extraction_type=${extractionType}`);
+            const data = await response.json();
+            
+            if (data.success) {
+                // Clear existing options
+                customerSelect.innerHTML = '';
+                
+                // Add new options
+                data.customers.forEach(customer => {
+                    const option = document.createElement('option');
+                    option.value = customer;
+                    option.textContent = customer;
+                    customerSelect.appendChild(option);
+                });
+            }
+        } catch (error) {
+            console.error('Error loading customers:', error);
+        }
+    }
+    
+    // Load customers saat halaman pertama kali dibuka
+    loadCustomers(extractionTypeSelect.value);
+    
+    // Load customers saat extraction_type berubah
+    extractionTypeSelect.addEventListener('change', function() {
+        loadCustomers(this.value);
+    });
+    
+    // Preview file yang dipilih
+    fileInput.addEventListener('change', function(e) {
+    const files = Array.from(e.target.files);
+        if (files.length > 0) {
+            filePreview.style.display = 'block';
+            fileName.innerHTML = files.map(f => `<div>📄 ${f.name}</div>`).join('');
+        }   
+    });
+    
+    // Submit form
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(form);
+        
+        // Validasi - cek apakah ada file yang dipilih
+        const files = fileInput.files;
+        if (files.length === 0) {
+            showError('Silakan pilih file PDF!');
+            return;
+        }
+        
+        showLoading(true);
+        hideError();
+        resultsSection.style.display = 'none';
+        exportBtn.style.display = 'none';
+        
+        try {
+            // Ganti endpoint ke multi-file
+            const response = await fetch('/api/pdf/upload-and-export-multi/', {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin'
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok && data.success) {
+                extractedData = data.results;
+                resultsSection.style.display = 'block';
+                let htmlContent = '';
+                for (const [filename, result] of Object.entries(data.results)) {
+                    htmlContent += `<strong>📄 ${filename}</strong><br>`;
+                    if (result.success) {
+                        htmlContent += `✅ Berhasil diekstrak<br>`;
+                        htmlContent += `<pre>${JSON.stringify(result.extracted_data, null, 2)}</pre><br>`;
+                    } else {
+                        htmlContent += `❌ Error: ${result.error}<br>`;
+                    }
+                }
+                jsonResult.innerHTML = htmlContent;
+                exportBtn.style.display = 'block';
+                showSuccess(`Berhasil memproses ${data.total_files} file PDF!`);
+            } else {
+                showError(data.error || 'Terjadi kesalahan');
+            }
+        } catch (error) {
+            showError('Error: ' + error.message);
+        } finally {
+            showLoading(false);
+        }
+    });
+    
+    // Export ke Excel
+    exportBtn.addEventListener('click', function() {
+        if (!extractedData) {
+            showError('Tidak ada data untuk di-export');
+            return;
+        }
+        
+        // Kirim data ke endpoint export
+        fetch('/api/pdf/export-excel/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ extracted_data: extractedData }),
+            credentials: 'same-origin'  // Penting: include cookies
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Export failed');
+            }
+            return response.blob();
+        })
+        .then(blob => {
+            // Download file
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'extraction_results.xlsx';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        })
+        .catch(error => {
+            showError('Gagal men-download Excel: ' + error.message);
+        });
+    });
+    
+    function showLoading(show) {
+        loading.style.display = show ? 'block' : 'none';
+        submitBtn.disabled = show;
+    }
+    
+    function showError(message) {
+        errorMessage.textContent = message;
+        errorMessage.style.display = 'block';
+    }
+    
+    function hideError() {
+        errorMessage.style.display = 'none';
+    }
+    
+    function showSuccess(message) {
+        const successDiv = document.createElement('div');
+        successDiv.className = 'alert alert-success mt-4';
+        successDiv.innerHTML = '<i class="fas fa-check-circle me-2"></i>' + message;
+        form.appendChild(successDiv);
+        setTimeout(() => successDiv.remove(), 5000);
+    }
+    
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    function toggleResults() {
+        if (resultsSection.style.display === 'none') {
+            resultsSection.style.display = 'block';
+        } else {
+            resultsSection.style.display = 'none';
+        }
+    }
+});
+</script>
+{% endblock javascript %}
+

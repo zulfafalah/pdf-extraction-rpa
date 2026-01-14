@@ -17,6 +17,11 @@ urlpatterns = [
         TemplateView.as_view(template_name="pages/about.html"),
         name="about",
     ),
+    path(
+        "pdf-upload/",
+        TemplateView.as_view(template_name="pages/pdf_upload.html"),
+        name="pdf_upload",
+    ),
     # Django Admin, use {% url 'admin:index' %}
     path(settings.ADMIN_URL, admin.site.urls),
     # User management

@@ -2,6 +2,12 @@ from django.db import models
 
 
 class PDFExtraction(models.Model):
+    EXTRACTION_TYPE_CHOICES = [
+        ('customer', 'Customer Extraction'),
+        ('pph_masukan', 'PPH Masukan'),
+        ('pph_keluaran', 'PPH Keluaran'),
+    ]
+    
     customer_id = models.CharField(max_length=100, null=True, blank=True)
     customer_name = models.CharField(max_length=255, choices=(
         ('Food Hall', 'Food Hall'),
@@ -12,6 +18,7 @@ class PDFExtraction(models.Model):
     updated_by = models.CharField(max_length=150, blank=True, null=True)
 
     extraction_method = models.CharField(max_length=100, default='regex',choices=[('regex', 'Regex Based Extraction'), ('ai', 'AI Based Extraction')])
+    extraction_type = models.CharField(max_length=50, choices=EXTRACTION_TYPE_CHOICES, default='customer')
     model_used = models.CharField(max_length=150, blank=True)
     input_token = models.IntegerField(default=0)
     output_token = models.IntegerField(default=0)

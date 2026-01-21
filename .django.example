@@ -1,0 +1,22 @@
+# General
+# ------------------------------------------------------------------------------
+USE_DOCKER=yes
+IPYTHONDIR=/app/.ipython
+# Redis
+# ------------------------------------------------------------------------------
+REDIS_URL=redis://redis:6379/0
+
+# Celery
+# ------------------------------------------------------------------------------
+
+# Flower
+CELERY_FLOWER_USER=your_flower_username
+CELERY_FLOWER_PASSWORD=your_flower_password
+
+# External Providers MySQL Database
+# ------------------------------------------------------------------------------
+PROVIDERS_DB_HOST=your_mysql_host
+PROVIDERS_DB_PORT=3306
+PROVIDERS_DB_USER=your_mysql_user
+PROVIDERS_DB_PASSWORD=your_mysql_password
+PROVIDERS_DB_NAME=providers

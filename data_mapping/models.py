@@ -20,5 +20,5 @@ class CustomerFieldMapping(models.Model):
         verbose_name_plural = 'Customer Field Mappings'
 
     def __str__(self):
-        return f'{self.customer_name} - {self.source_field} to {self.target_field}'
+        return f'{self.customer_name} - {self.origin_value} to {self.destination_value}'
 
